@@ -244,7 +244,7 @@ class Matrix:
         return Matrix(transposed, self.field)
 
     def __process_new_matrix(self):
-        """Checks consistent width and converts all representatves to field elements"""
+        """Checks consistent width and converts all representatives to field elements"""
 
         width = None
         for i in range(len(self.m)):

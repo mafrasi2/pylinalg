@@ -148,7 +148,7 @@ class ResidueField(Field):
 
     def get_inverse(self, ele):
         if ele.value % self.prime == 0:
-            return None
+            raise ArithmeticError("Inverse of 0 is not defined.")
         else:
             gcd, a, b = xgcd(ele.value % self.prime, self.prime)
             return FieldElement(a, self)
@@ -259,6 +259,10 @@ class Matrix:
 
         return width, len(self.m)
 
+    def copy(self):
+        """Returns a new matrix with the same elements"""
+        return Matrix([list(row) for row in self.m], self.field)
+
     def __mul__(self, other):
         """Scalar and matrix multiplication"""
         if isinstance(other, int):
@@ -331,7 +335,8 @@ class Matrix:
         if isinstance(pos, tuple) and len(pos) == 2:
             (pos_h, pos_w) = pos
             if pos_h >= self.height or pos_w >= self.width or max(pos_h, pos_w) < 0:
-                raise IndexError("pos is outside of matrix bounds")
+                msg = "position ({},{}) is outside of matrix bounds"
+                raise IndexError(msg.format(pos_h, pos_w))
             elif pos_h >= 0 and pos_w >= 0:
                 return self.m[pos_h][pos_w]
             elif pos_w < 0:
@@ -383,11 +388,11 @@ class Matrix:
 
         return "[" + ",\n ".join(lines) + "]"
 
-
-    def solve(self, x):
-        """Solves the equation Ab=x for b"""
-        n = self.height
+    def to_upper_triangular_matrix(self):
+        """Transforms into an upper triangular matrix"""
         zero = self.field.get_zero()
+        n = min(self.height, self.width)
+
         for i in range(n):
             # Search for first non-zero in this column
             max_row = i
@@ -396,23 +401,51 @@ class Matrix:
                     break
             # swap row i and max_row
             self[i,-1], self[max_row, -1] = self[max_row, -1], self[i,-1]
-            x[i,-1], x[max_row, -1] = x[max_row, -1], x[i,-1]
 
-            # Make all rows below this one 0 in current column
-            for k in range(i+1, n):
-                c = -self[k,i]/self[i,i]
-                self[k,i] = 0
-                for j in range(i + 1, n):
-                    self[k,j] += c * self[i,j]
-                x[k, 0] += c * x[i,0]
+            if self[i,i] != zero:
+                # Make all rows below this one 0 in current column
+                for k in range(i+1, self.height):
+                    c = -self[k,i]/self[i,i]
+                    self[k,i] = 0
+                    for j in range(i + 1, self.width):
+                        self[k,j] += c * self[i,j]
 
+    def to_diagonal_matrix(self):
+        """Transforms into a diagonal matrix"""
+        self.to_upper_triangular_matrix()
 
-        # Solve equation Ax=b for an upper triangular matrix A
-        for i in range(n-1, -1, -1):
-            x[i, 0] = x[i,0]/self[i,i]
-            for k in range(i-1, -1, -1):
-                x[k,0] -= self[k,i] * x[i, 0]
-        return x
+        zero = self.field.get_zero()
+        n = min(self.height, self.width)
+
+        for i in range(n-1,-1,-1):
+            # find first non-zero cell in the current row
+            first_nz = i
+            for first_nz in range(i, self.width):
+                if self[i, first_nz] != zero:
+                    break
+
+            if self[i, first_nz] != zero:
+                for j in range(i-1,-1,-1):
+                    c = -self[j,first_nz]/self[i,first_nz]
+                    self[j,first_nz] = 0
+                    for k in range(first_nz + 1, self.width):
+                        self[j,k] += c * self[i,k]
+
+    def solve(self, x):
+        """Solves the equation Ab=x for b"""
+        if self.width > self.height:
+            raise ArithmeticError("Can't calculate solution for a matrix with width > height")
+
+        tmp = self | x
+        tmp.to_upper_triangular_matrix()
+
+        n = tmp.width
+        # Solve equation Ax=b for an upper triangular matrix tmp
+        for i in range(n-2, -1, -1):
+            tmp[i, n-1] = tmp[i,n-1]/tmp[i,i]
+            for k in range(i-2, -1, -1):
+                tmp[k,n-1] -= tmp[k,i] * tmp[i, n-1]
+        return tmp[-1, n-1]
 
 def input_matrix():
     """Creates a python matrix from command line input"""

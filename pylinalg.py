@@ -39,42 +39,21 @@ class Field:
         raise NotImplementedError()
 
     def add(self, a, b):
-        if type(a) is type(b):
-            raise NotImplementedError()
-        return NotImplemented
+        raise NotImplementedError()
 
     def mul(self, a, b):
-        """Multiplies with another element or .
-        """
-        if isinstance(a, FieldElement) and isinstance(b, FieldElement):
-            if a.field == b.field:
-                raise NotImplementedError()
-            
-            raise NotImplementedError("Trying to multiply elements of different fields")
-        return NotImplemented
-
-    def sub(self, a, b):
-        if type(a) is type(b):
-            return a + self.get_negative(b)
-        return NotImplemented
-
-    def div(self, a, b):
-        if type(a) is type(b):
-            return a * self.get_inverse(b)
-        return NotImplemented
-
-    def rmul(self, a, b):
-        """Multiplies by an integer by summing up a b-times"""
-        if isinstance(a, int):
-            # a + a + ... + a
-            return sum(repeat(a, b))
-        return NotImplemented
+        raise NotImplementedError()
 
     def eq(self, a, b):
         """Checks a and b for equality"""
-        if isinstance(a, FieldElement) and isinstance(b, FieldElement):
-            raise NotImplementedError()
-        return NotImplemented             
+        raise NotImplementedError()
+
+    def sub(self, a, b):
+        return a + self.get_negative(b)
+
+    def div(self, a, b):
+        return a * self.get_inverse(b)
+
 
 class FieldElement:
     def __init__(self, value, field):
@@ -88,22 +67,40 @@ class FieldElement:
         return self.__repr__()
 
     def __add__(self, other):
-        return self.field.add(self, other)
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.field.add(self, other)
+        return NotImplemented
 
     def __mul__(self, other):
-        return self.field.mul(self, other)
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.field.mul(self, other)
+        return NotImplemented
 
     def __sub__(self, other):
-        return self.field.sub(self, other)
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.field.sub(self, other)
+        return NotImplemented
 
     def __truediv__(self, other):
-        return self.field.div(self, other)
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.field.div(self, other)
+        return NotImplemented
 
     def __neg__(self):
         return self.field.get_negative(self)
 
+    def __eq__(self, other):
+        """Check for equality"""
+        if isinstance(other, FieldElement) and other.field == self.field:
+            return self.field.eq(self, other)
+        return NotImplemented
+
     def __rmul__(self, other):
-        return self.field.rmul(other, self)
+        """Multiplies by an integer by summing up a b-times"""
+        if isinstance(self, int):
+            # a + a + ... + a
+            return sum(repeat(self, other))
+        return NotImplemented
 
     def __radd__(self, other):
         """Fixes builtin sum"""
@@ -111,12 +108,8 @@ class FieldElement:
             return self
         return NotImplemented
 
-    def __eq__(self, other):
-        """check for equality"""
-        return self.field.eq(self, other)
-
     def __ne__(self, other):
-        """check for non-equality"""
+        """Check for non-equality"""
         result = self.__eq__(other)
         if result is NotImplemented:
             return result
@@ -160,23 +153,13 @@ class ResidueField(Field):
         return FieldElement((-ele.value) % self.prime, self)
 
     def add(self, a, b):
-        if isinstance(a, FieldElement) and isinstance(b, FieldElement):
-            if a.field == b.field:
-                return FieldElement((b.value + a.value) % self.prime, self)
-        return NotImplemented
+        return FieldElement((b.value + a.value) % self.prime, self)
 
     def mul(self, a, b):
-        if isinstance(a, FieldElement) and isinstance(b, FieldElement):
-            if a.field == b.field:
-                return FieldElement((b.value * a.value) % self.prime, self)
-            
-            raise NotImplementedError("Trying to multiply elements of different fields")
-        return NotImplemented
+        return FieldElement((b.value * a.value) % self.prime, self)
 
     def eq(self, a, b):
-        if isinstance(a, FieldElement) and isinstance(b, FieldElement):
-            return a.field == b.field and a.value % self.prime == b.value % self.prime
-        return NotImplemented    
+        return a.field == b.field and a.value % self.prime == b.value % self.prime
 
 class MalformedTransversalError(Exception):
     pass

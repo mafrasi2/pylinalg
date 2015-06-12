@@ -81,8 +81,11 @@ class FieldElement:
         self.value = value
         self.field = field
 
-    def __str__(self):
+    def __repr__(self):
         return self.field.element_to_str(self)
+
+    def __str__(self):
+        return self.__repr__()
 
     def __add__(self, other):
         return self.field.add(self, other)
@@ -371,7 +374,7 @@ class Matrix:
                     raise ValueError("The column doesn't have the same height as the matrix.")
 
                 for i in range(self.height):
-                    self.m[i][pos_w] = self.field.from_representant(value[i][0]) 
+                    self.m[i][pos_w] = self.field.from_representant(value.m[i][0]) 
 
         return NotImplemented
 
@@ -379,7 +382,7 @@ class Matrix:
         # convert all elements to strings
         str_matrix = [[str(ele) for ele in row] for row in self.m]
         # transpose string matrix
-        tr_str_matrix = list(zip(*str_matrix))
+        tr_str_matrix = zip(*str_matrix)
         # find max column width for each column
         max_width = [max(len(ele) for ele in col) for col in tr_str_matrix]
         # join rows to strings, using the individual column widths
@@ -446,6 +449,36 @@ class Matrix:
             for k in range(i-2, -1, -1):
                 tmp[k,n-1] -= tmp[k,i] * tmp[i, n-1]
         return tmp[-1, n-1]
+
+    def get_rank(self):
+        """Calculates the rank of this matrix"""
+        tmp = self.copy()
+        tmp.to_upper_triangular_matrix()
+
+        # Count non-zero rows
+        zero = tmp.field.get_zero()
+        count = 0
+        for row in tmp.m:
+            for e in row:
+                if e != zero:
+                    count += 1
+                    break
+        return count
+
+    def get_determinant(self):
+        """Calculates the determinant of this matrix"""
+        if self.width != self.height:
+            msg = "The determinant of a {}x{} matrix is undefined"
+            raise ArithmeticError(msg.format(self.width, self.height))
+
+        tmp = self.copy()
+        tmp.to_upper_triangular_matrix()
+
+        det = tmp.field.get_one()
+        for i in range(self.width):
+            det *= tmp[i,i]
+        return det
+
 
 def input_matrix():
     """Creates a python matrix from command line input"""

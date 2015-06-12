@@ -93,16 +93,22 @@ print("(B | C) * A = \n{}".format(R))
 ```
 
 ## Solving systems of linear equations
-Transform B | C into an upper triangular matrix:
+Transform B | C into an upper triangular matrix. Use normalize=False, if you
+don't want to normalize the diagonal.
 
 ```python
 D = B | C
-D.to_upper_triangular_matrix()
+D.to_upper_triangular_matrix(normalize=True)
 ```
 
-And into a diagonal matrix (the step above is not necessary to do this)
+And into a diagonal matrix (the step above is not necessary to do this).
 ```python
-D.to_diagonal_matrix()
+D.to_diagonal_matrix(normalize=True)
+```
+
+Calculate the inverse of A
+```python
+print(A * A.get_inverse())
 ```
 
 Solve the equation Eb=x for b in 𝔽<sub>2</sub>.

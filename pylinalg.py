@@ -374,7 +374,7 @@ class Matrix:
 
         return "[" + ",\n ".join(lines) + "]"
 
-    def to_upper_triangular_matrix(self):
+    def to_upper_triangular_matrix(self, normalize=False):
         """Transforms into an upper triangular matrix"""
         zero = self.field.get_zero()
         n = min(self.height, self.width)
@@ -386,19 +386,25 @@ class Matrix:
                 if self[max_row, i] != zero:
                     break
             # swap row i and max_row
-            self[i,-1], self[max_row, -1] = self[max_row, -1], self[i,-1]
+            self[i,-1], self[max_row,-1] = self[max_row,-1], self[i,-1]
 
             if self[i,i] != zero:
                 # Make all rows below this one 0 in current column
-                for k in range(i+1, self.height):
+                for k in range(i + 1, self.height):
                     c = -self[k,i]/self[i,i]
                     self[k,i] = 0
                     for j in range(i + 1, self.width):
                         self[k,j] += c * self[i,j]
 
-    def to_diagonal_matrix(self):
+                if normalize:
+                    inv = self.field.get_inverse(self[i,i])
+                    self[i,i] = 1
+                    for k in range(i + 1, self.width):
+                        self[i,k] *= inv
+
+    def to_diagonal_matrix(self, normalize=False):
         """Transforms into a diagonal matrix"""
-        self.to_upper_triangular_matrix()
+        self.to_upper_triangular_matrix(normalize=normalize)
 
         zero = self.field.get_zero()
         n = min(self.height, self.width)
@@ -423,7 +429,7 @@ class Matrix:
             raise ArithmeticError("Can't calculate solution for a matrix with width > height")
 
         tmp = self | x
-        tmp.to_upper_triangular_matrix()
+        tmp.to_upper_triangular_matrix(normalize=False)
 
         n = tmp.width
         # Solve equation Ax=b for an upper triangular matrix tmp
@@ -462,6 +468,27 @@ class Matrix:
             det *= tmp[i,i]
         return det
 
+    def get_inverse(self):
+        """Calculates the inverse of this matrix, if possible"""
+        if self.width != self.height:
+            msg = "There is no inverse of a {}x{} matrix"
+            raise ArithmeticError(msg.format(self.width, self.height))
+
+        zero = self.field.get_zero()
+        one  = self.field.get_one()
+
+        # create identity matrix
+        id_matrix = [[one if j == i else zero for j in range(self.width)] for i in range(self.height)]
+        id_matrix = Matrix(id_matrix, self.field)
+        tmp = self | id_matrix
+        # get the identity matrix to the left
+        tmp.to_diagonal_matrix(normalize=True)
+        # concatenate all columns on the right
+        inv = tmp[-1,self.width]
+        for i in range(self.width - 1):
+            inv = inv | tmp[-1,i + self.width + 1]
+
+        return inv
 
 def input_matrix():
     """Creates a python matrix from command line input"""

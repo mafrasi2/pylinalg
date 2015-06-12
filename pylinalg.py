@@ -1,4 +1,5 @@
 from math import sqrt
+from fractions import Fraction
 from itertools import count, islice, zip_longest, repeat
 import sys
 
@@ -160,6 +161,49 @@ class ResidueField(Field):
 
     def eq(self, a, b):
         return a.field == b.field and a.value % self.prime == b.value % self.prime
+
+class RationalNumbersField(Field):
+    def __init__(self, output_as_fraction=True):
+        self.output_as_fraction = output_as_fraction
+
+    def from_representant(self, rep):
+        """Please don't use floats to prevent any misbehaviour"""
+        if isinstance(rep, tuple):
+            return FieldElement(Fraction(*rep), self)
+        elif isinstance(rep, int):
+            return FieldElement(Fraction(rep), self)
+        elif isinstance(rep, Fraction):
+            return FieldElement(rep, self)
+        elif isinstance(rep, FieldElement) and rep.field == self:
+            return rep
+        return NotImplemented
+
+    def element_to_str(self, ele):
+        if self.output_as_fraction:
+            return str(ele.value)
+        else:
+            return str(float(ele.value))
+
+    def get_zero(self):
+        return FieldElement(Fraction(0,1), self)
+
+    def get_one(self):
+        return FieldElement(Fraction(1,1), self)
+
+    def get_inverse(self, ele):
+        return FieldElement(1 / ele.value, self)
+
+    def get_negative(self, ele):
+        return FieldElement(-ele.value, self)
+
+    def add(self, a, b):
+        return FieldElement(b.value + a.value, self)
+
+    def mul(self, a, b):
+        return FieldElement(b.value * a.value, self)
+
+    def eq(self, a, b):
+        return a.value == b.value
 
 class MalformedTransversalError(Exception):
     pass

@@ -1,12 +1,25 @@
 #   Examples
 
 Import the module:
+
 ```python
 from pylinalg import *
 ```
 
 ## Fields
-We will to use 𝔽<sub>5</sub> for our first examples.
+
+The field of rational numbers. Set output_as_fraction=False to get decimal representations, 
+when calling the str() function. Note that all disadvantages of floats apply then.
+
+```python
+rat_field = RationalNumbersField(output_as_fraction=True)
+
+a = rat_field.from_representant((9, 6))  # the fraction 9/6
+b = rat_field.from_representant(3)
+print(a * b)
+```
+
+We will to use 𝔽<sub>5</sub> in our following examples.
 
 Create the new residue field 𝔽<sub>5</sub> and its transversal {-2,...,2}:
 
@@ -18,21 +31,20 @@ res_field_5 = ResidueField(5, transversal=neg_trans_5)
 Find the inverse of 3 in 𝔽<sub>5</sub>:
 
 ```python
-value = 3
-a = res_field_5.from_representant(value)
+a = res_field_5.from_representant(3)
 a_i = res_field_5.get_inverse(a)
 msg = "The inverse of {} in F_{} is: {}"
-print(msg.format(value, 5, a_i))
+print(msg.format(a, 5, a_i))
 ```
 
 Swap the transversal of 𝔽<sub>5</sub> to {0,...,4}
 
 ```python
-print(a)  # -2
 print("Switching to standard transversal:")
+print(str(a) + " -> ", end='') #  no new line
 trans_5 = StdTransversal(5)
 res_field_5.transversal = trans_5
-print(a)  #  3
+print(a)
 ```
 
 ## Basic matrix operations

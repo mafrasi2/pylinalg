@@ -423,14 +423,17 @@ class Matrix:
         zero = self.field.get_zero()
         n = min(self.height, self.width)
 
+        swaps = 0
         for i in range(n):
             # Search for first non-zero in this column
             max_row = i
             for max_row in range(i, n):
                 if self[max_row, i] != zero:
                     break
-            # swap row i and max_row
-            self[i,-1], self[max_row,-1] = self[max_row,-1], self[i,-1]
+            if max_row != i:
+                # swap row i and max_row
+                self[i,-1], self[max_row,-1] = self[max_row,-1], self[i,-1]
+                swaps += 1
 
             if self[i,i] != zero:
                 # Make all rows below this one 0 in current column
@@ -445,6 +448,8 @@ class Matrix:
                     self[i,i] = 1
                     for k in range(i + 1, self.width):
                         self[i,k] *= inv
+
+        return swaps
 
     def to_diagonal_matrix(self, normalize=False):
         """Transforms into a diagonal matrix"""
@@ -505,12 +510,16 @@ class Matrix:
             raise ArithmeticError(msg.format(self.width, self.height))
 
         tmp = self.copy()
-        tmp.to_upper_triangular_matrix()
+        swaps = tmp.to_upper_triangular_matrix()
 
         det = tmp.field.get_one()
         for i in range(self.width):
             det *= tmp[i,i]
-        return det
+
+        if swaps % 2 != 0:
+            return -det
+        else:
+            return det
 
     def get_inverse(self):
         """Calculates the inverse of this matrix, if possible"""

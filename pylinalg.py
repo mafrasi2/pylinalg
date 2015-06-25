@@ -314,6 +314,23 @@ class Matrix:
             
         return NotImplemented
 
+    def __pow__(self, other):
+        if isinstance(other, int):
+            if other == 0:
+                return identity_matrix(self.field, self.height, self.width)
+            elif other > 0:
+                factor = self
+            elif other < 0:
+                factor = self.get_inverse()
+                other = -other
+
+            result = factor
+            for _ in range(other-1):
+                result *= factor
+
+            return result
+        return NotImplemented
+
     def __add__(self, other):
         if isinstance(other, Matrix):
             if self.width != other.width or self.height != other.height:
@@ -527,12 +544,8 @@ class Matrix:
             msg = "There is no inverse of a {}x{} matrix"
             raise ArithmeticError(msg.format(self.width, self.height))
 
-        zero = self.field.get_zero()
-        one  = self.field.get_one()
-
         # create identity matrix
-        id_matrix = [[one if j == i else zero for j in range(self.width)] for i in range(self.height)]
-        id_matrix = Matrix(id_matrix, self.field)
+        id_matrix = identity_matrix(self.field, self.height, self.width)
         tmp = self | id_matrix
         # get the identity matrix to the left
         tmp.to_diagonal_matrix(normalize=True)
@@ -542,6 +555,14 @@ class Matrix:
             inv = inv | tmp[-1,i + self.width + 1]
 
         return inv
+
+def identity_matrix(field, n, m):
+    """Creates a identity matrix with height n and width m"""
+    one = field.get_one()
+    zero = field.get_zero()
+    id_matrix = [[one if j == i else zero for j in range(m)] for i in range(n)]
+    return Matrix(id_matrix, field)
+
 
 def input_matrix():
     """Creates a python matrix from command line input"""

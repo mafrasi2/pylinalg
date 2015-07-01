@@ -311,8 +311,16 @@ class Matrix:
                         for col_b in tr_other.m] 
                        for row_a in self.m]
             return Matrix(product, self.field)
-            
-        return NotImplemented
+        elif not isinstance(other, FieldElement):
+            other = self.field.from_representant(other)
+        elif not other.field == self.field:
+            return NotImplemented
+
+        m = [[cell * other for cell in row] for row in self.m]
+        return Matrix(m, self.field)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
 
     def __pow__(self, other):
         if isinstance(other, int):

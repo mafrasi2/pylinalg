@@ -435,6 +435,17 @@ class Matrix:
 
         return "[" + ",\n ".join(lines) + "]"
 
+    def trace(self):
+        """Get the product of the diagonal entries"""
+        if self.height != self.width:
+            msg = "tr is undefined for a {}x{} matrix"
+            raise ArithmeticError(msg.format(self.height, self.width))
+
+        tr = self.field.get_one()
+        for i in range(self.width):
+            tr *= self[i,i]
+        return tr
+
     def to_upper_triangular_matrix(self, normalize=False):
         """Transforms into an upper triangular matrix"""
         zero = self.field.get_zero()
@@ -529,9 +540,7 @@ class Matrix:
         tmp = self.copy()
         swaps = tmp.to_upper_triangular_matrix()
 
-        det = tmp.field.get_one()
-        for i in range(self.width):
-            det *= tmp[i,i]
+        det = tmp.trace()
 
         if swaps % 2 != 0:
             return -det

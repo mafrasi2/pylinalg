@@ -70,22 +70,26 @@ class FieldElement:
     def __add__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.add(self, other)
-        return NotImplemented
+        else:
+            return self.field.add(self, self.field.from_representant(other))
 
     def __mul__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.mul(self, other)
-        return NotImplemented
+        else:
+            return self.field.mul(self, self.field.from_representant(other))
 
     def __sub__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.sub(self, other)
-        return NotImplemented
+        else:
+            return self.field.sub(self, self.field.from_representant(other))
 
     def __truediv__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.div(self, other)
-        return NotImplemented
+        else:
+            return self.field.div(self, self.field.from_representant(other))
 
     def __neg__(self):
         return self.field.get_negative(self)
@@ -94,20 +98,21 @@ class FieldElement:
         """Check for equality"""
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.eq(self, other)
-        return NotImplemented
+        else:
+            return self.field.eq(self, self.field.from_representant(other))
 
     def __rmul__(self, other):
-        """Multiplies by an integer by summing up a b-times"""
-        if isinstance(self, int):
-            # a + a + ... + a
-            return sum(repeat(self, other))
-        return NotImplemented
+        return self.field.mul(self.field.from_representant(other), self)
 
     def __radd__(self, other):
-        """Fixes builtin sum"""
-        if other == 0:
+        if isinstance(other, int) and other == 0:
+            # Fixes builtin sum
             return self
-        return NotImplemented
+        else:
+            return self.field.add(self.field.from_representant(other), self)
+
+    def __rsub__(self, other):
+        return self.field.sub(self.field.from_representant(other), self)
 
     def __ne__(self, other):
         """Check for non-equality"""
@@ -263,7 +268,7 @@ class MalformedMatrixError(Exception):
 
 class Matrix:
     def __init__(self, m, field):
-        self.m = m
+        self.m = [[cell for cell in row] for row in m]
         self.field = field
         self.width, self.height = self.__process_new_matrix()
 
@@ -295,11 +300,7 @@ class Matrix:
 
     def __mul__(self, other):
         """Scalar and matrix multiplication"""
-        if isinstance(other, int):
-            for r in range(self.height):
-                for c in range(self.width):
-                    self.m[r][c] = other * self.m[r][c]
-        elif isinstance(other, Matrix):
+        if isinstance(other, Matrix):
             if self.width != other.height:
                 error_msg = "Tried to multiplicate matrices with unfitting dimensions: {} and {}"
                 raise ArithmeticError(error_msg.format(self.width, other.height))
@@ -311,6 +312,9 @@ class Matrix:
                         for col_b in tr_other.m] 
                        for row_a in self.m]
             return Matrix(product, self.field)
+        else:
+            m = [[cell * other for cell in row] for row in self.m]
+            return Matrix(m, self.field)
             
         return NotImplemented
 
@@ -340,7 +344,7 @@ class Matrix:
             summed = [[ele_a + ele_b for ele_a, ele_b in zip(row_a, row_b)]
                         for row_a, row_b in zip(other.m, self.m)]
 
-            return self.Matrix(summed, self.field)
+            return Matrix(summed, self.field)
         return NotImplemented
 
     def __sub__(self, other):
@@ -369,10 +373,23 @@ class Matrix:
             return Matrix(new_m, self.field)
         return NotImplemented
 
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
     def __radd__(self, other):
         """Fixes builtin sum"""
         if other == 0:
             return self
+        return NotImplemented
+
+    def __eq__(self, other):
+        if isinstance(other, Matrix):
+            return (self.field == other.field and
+                   self.height == other.height and
+                   self.width == other.width and
+                   all(a == b for row_a, row_b in zip(self.m, other.m) 
+                              for a, b in zip(row_a, row_b) )
+                   )
         return NotImplemented
 
     def __getitem__(self, pos):
@@ -394,7 +411,6 @@ class Matrix:
                 # return column
                 col = [[row[pos_w]] for row in self.m]
                 return Matrix(col, self.field)
-
         return NotImplemented
 
     def __setitem__(self, pos, value):

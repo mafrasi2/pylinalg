@@ -270,7 +270,7 @@ class Matrix:
     def __init__(self, m, field):
         self.m = [[cell for cell in row] for row in m]
         self.field = field
-        self.width, self.height = self.__process_new_matrix()
+        self.height, self.width = self.__process_new_matrix()
 
     def transpose(self):
         # zip the rows
@@ -292,7 +292,7 @@ class Matrix:
             for j in range(l):
                 self.m[i][j] = self.field.from_representant(self.m[i][j])
 
-        return width, len(self.m)
+        return len(self.m), width
 
     def copy(self):
         """Returns a new matrix with the same elements"""
@@ -444,6 +444,9 @@ class Matrix:
         return NotImplemented
 
     def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
         # convert all elements to strings
         str_matrix = [[str(ele) for ele in row] for row in self.m]
         # transpose string matrix
@@ -556,7 +559,7 @@ class Matrix:
         """Calculates the determinant of this matrix"""
         if self.width != self.height:
             msg = "The determinant of a {}x{} matrix is undefined"
-            raise ArithmeticError(msg.format(self.width, self.height))
+            raise ArithmeticError(msg.format(self.height, self.width))
 
         tmp = self.copy()
         swaps = tmp.to_upper_triangular_matrix()
@@ -572,7 +575,7 @@ class Matrix:
         """Calculates the inverse of this matrix, if possible"""
         if self.width != self.height:
             msg = "There is no inverse of a {}x{} matrix"
-            raise ArithmeticError(msg.format(self.width, self.height))
+            raise ArithmeticError(msg.format(self.height, self.width))
 
         # create identity matrix
         id_matrix = identity_matrix(self.field, self.height, self.width)
@@ -585,6 +588,49 @@ class Matrix:
             inv = inv | tmp[-1,i + self.width + 1]
 
         return inv
+
+    def char_polynom(self):
+        """Calculates the characteristic polynom using 
+        the Samuelson-Berkowitz algorithm.
+        Returns a list of coefficients sorted from most
+        to least significant.
+        """
+        if self.height != self.width:
+            msg = "There is characteristic polynom of a {}x{} matrix"
+            raise ArithmeticError(msg.format(self.height, self.width))
+
+        one = self.field.get_one()
+        zero = self.field.get_zero()
+
+        v = Matrix([[one],[-self[0,0]]], self.field)
+        A = [[]]
+        for r in range(self.width - 1):
+            R = [[-self[r+1,j] for j in range(r+1)]]
+            S = [[self[i,r+1]] for i in range(r+1)]
+            for i, row in enumerate(A):
+                row.append(self[i,r])
+
+            R = Matrix(R, self.field)
+            S = Matrix(S, self.field)
+            Ar = Matrix(A, self.field)
+            q = [one, -self[r+1,r+1], (R*S)[0,0]]
+            for k in range(r):
+                q.append((R*Ar*S)[0,0])
+                Ar *= Ar
+            q = list(reversed(q))
+            print(q)
+
+            Toep = []
+            for i in range(r+2):
+                row = q[len(q)-i-1:len(q)+1]
+                row.extend([zero]*(len(q)-i-2))
+                Toep.append(row)
+            Toep.append(q[0:len(q)-1])
+            Toep = Matrix(Toep, self.field)
+            v = Toep*v
+
+            A.append([self[r+1,i] for i in range(r+1)])
+        return v
 
 def identity_matrix(field, n, m):
     """Creates a identity matrix with height n and width m"""

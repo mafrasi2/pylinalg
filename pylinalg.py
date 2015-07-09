@@ -333,12 +333,27 @@ class Matrix:
                 factor = self.inverse()
                 other = -other
 
-            result = factor
-            for _ in range(other-1):
-                result *= factor
+            if factor.height == factor.width:
+                result = identity_matrix(factor.field, factor.height, factor.height)
+                while other > 0:
+                    part, other = self.__fast_pow(other)
+                    result = result * part
+            else:
+                result = factor
+                for _ in range(other-1):
+                    result *= factor
 
             return result
         return NotImplemented
+
+    def __fast_pow(self, exp):
+        print("Baum")
+        if exp == 1:
+            return self,0
+        else:
+            part,residue = self.__fast_pow(exp // 2)
+            return part * part, exp % 2 + 2*residue
+
 
     def __add__(self, other):
         if isinstance(other, Matrix):

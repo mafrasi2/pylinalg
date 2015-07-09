@@ -21,22 +21,22 @@ def xgcd(a,b):
     return a, prevx, prevy
 
 class Field:
-    def from_representant(self, repr):
+    def from_repr(self, repr):
         raise NotImplementedError()
 
     def element_to_str(self, ele):
         raise NotImplementedError()
 
-    def get_zero(self):
+    def zero(self):
         raise NotImplementedError()
 
-    def get_one(self):
+    def one(self):
         raise NotImplementedError()
 
-    def get_inverse(self, ele):
+    def inverse(self, ele):
         raise NotImplementedError()
 
-    def get_negative(self, ele):
+    def negative(self, ele):
         raise NotImplementedError()
 
     def add(self, a, b):
@@ -50,10 +50,10 @@ class Field:
         raise NotImplementedError()
 
     def sub(self, a, b):
-        return a + self.get_negative(b)
+        return a + self.negative(b)
 
     def div(self, a, b):
-        return a * self.get_inverse(b)
+        return a * self.inverse(b)
 
 
 class FieldElement:
@@ -71,48 +71,48 @@ class FieldElement:
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.add(self, other)
         else:
-            return self.field.add(self, self.field.from_representant(other))
+            return self.field.add(self, self.field.from_repr(other))
 
     def __mul__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.mul(self, other)
         else:
-            return self.field.mul(self, self.field.from_representant(other))
+            return self.field.mul(self, self.field.from_repr(other))
 
     def __sub__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.sub(self, other)
         else:
-            return self.field.sub(self, self.field.from_representant(other))
+            return self.field.sub(self, self.field.from_repr(other))
 
     def __truediv__(self, other):
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.div(self, other)
         else:
-            return self.field.div(self, self.field.from_representant(other))
+            return self.field.div(self, self.field.from_repr(other))
 
     def __neg__(self):
-        return self.field.get_negative(self)
+        return self.field.negative(self)
 
     def __eq__(self, other):
         """Check for equality"""
         if isinstance(other, FieldElement) and other.field == self.field:
             return self.field.eq(self, other)
         else:
-            return self.field.eq(self, self.field.from_representant(other))
+            return self.field.eq(self, self.field.from_repr(other))
 
     def __rmul__(self, other):
-        return self.field.mul(self.field.from_representant(other), self)
+        return self.field.mul(self.field.from_repr(other), self)
 
     def __radd__(self, other):
         if isinstance(other, int) and other == 0:
             # Fixes builtin sum
             return self
         else:
-            return self.field.add(self.field.from_representant(other), self)
+            return self.field.add(self.field.from_repr(other), self)
 
     def __rsub__(self, other):
-        return self.field.sub(self.field.from_representant(other), self)
+        return self.field.sub(self.field.from_repr(other), self)
 
     def __ne__(self, other):
         """Check for non-equality"""
@@ -133,7 +133,7 @@ class ResidueField(Field):
             raise ValueError("Transversal does not match the specified residue field.")
         self.transversal = transversal
 
-    def from_representant(self, rep):
+    def from_repr(self, rep):
         if isinstance(rep, int):
             return FieldElement(rep, self)
         elif isinstance(rep, FieldElement) and rep.field == self:
@@ -142,20 +142,20 @@ class ResidueField(Field):
     def element_to_str(self, ele):
         return str(self.transversal.get_repr(ele))
 
-    def get_zero(self):
+    def zero(self):
         return FieldElement(0, self)
 
-    def get_one(self):
+    def one(self):
         return FieldElement(1, self)
 
-    def get_inverse(self, ele):
+    def inverse(self, ele):
         if ele.value % self.prime == 0:
             raise ArithmeticError("Inverse of 0 is not defined.")
         else:
             gcd, a, b = xgcd(ele.value % self.prime, self.prime)
             return FieldElement(a, self)
 
-    def get_negative(self, ele):
+    def negative(self, ele):
         return FieldElement((-ele.value) % self.prime, self)
 
     def add(self, a, b):
@@ -171,7 +171,7 @@ class RationalNumbersField(Field):
     def __init__(self, output_as_fraction=True):
         self.output_as_fraction = output_as_fraction
 
-    def from_representant(self, rep):
+    def from_repr(self, rep):
         """Please don't use floats to prevent any misbehaviour"""
         if isinstance(rep, tuple):
             return FieldElement(Fraction(*rep), self)
@@ -189,16 +189,16 @@ class RationalNumbersField(Field):
         else:
             return str(float(ele.value))
 
-    def get_zero(self):
+    def zero(self):
         return FieldElement(Fraction(0,1), self)
 
-    def get_one(self):
+    def one(self):
         return FieldElement(Fraction(1,1), self)
 
-    def get_inverse(self, ele):
+    def inverse(self, ele):
         return FieldElement(1 / ele.value, self)
 
-    def get_negative(self, ele):
+    def negative(self, ele):
         return FieldElement(-ele.value, self)
 
     def add(self, a, b):
@@ -290,7 +290,7 @@ class Matrix:
                 raise MalformedMatrixError("The matrix has multiple row lengths.")
 
             for j in range(l):
-                self.m[i][j] = self.field.from_representant(self.m[i][j])
+                self.m[i][j] = self.field.from_repr(self.m[i][j])
 
         return len(self.m), width
 
@@ -313,7 +313,7 @@ class Matrix:
                        for row_a in self.m]
             return Matrix(product, self.field)
         elif not isinstance(other, FieldElement):
-            other = self.field.from_representant(other)
+            other = self.field.from_repr(other)
         elif not other.field == self.field:
             return NotImplemented
 
@@ -330,7 +330,7 @@ class Matrix:
             elif other > 0:
                 factor = self
             elif other < 0:
-                factor = self.get_inverse()
+                factor = self.inverse()
                 other = -other
 
             result = factor
@@ -427,19 +427,19 @@ class Matrix:
             if pos_h >= self.height or pos_w >= self.width or max(pos_h, pos_w) < 0:
                 raise IndexError("pos is outside of matrix bounds")
             elif pos_h >= 0 and pos_w >= 0:
-                self.m[pos_h][pos_w] = self.field.from_representant(value)
+                self.m[pos_h][pos_w] = self.field.from_repr(value)
             elif pos_w < 0:
                 # set row
                 if value.width != self.width:
                     raise ValueError("The row doesn't have the same width as the matrix.")
-                self.m[pos_h] = [self.field.from_representant(ele) for ele in value.m[0]]
+                self.m[pos_h] = [self.field.from_repr(ele) for ele in value.m[0]]
             else:
                 # set column
                 if value.height != self.height:
                     raise ValueError("The column doesn't have the same height as the matrix.")
 
                 for i in range(self.height):
-                    self.m[i][pos_w] = self.field.from_representant(value.m[i][0]) 
+                    self.m[i][pos_w] = self.field.from_repr(value.m[i][0]) 
 
         return NotImplemented
 
@@ -465,14 +465,14 @@ class Matrix:
             msg = "tr is undefined for a {}x{} matrix"
             raise ArithmeticError(msg.format(self.height, self.width))
 
-        tr = self.field.get_one()
+        tr = self.field.one()
         for i in range(self.width):
             tr *= self[i,i]
         return tr
 
     def to_upper_triangular_matrix(self, normalize=False):
         """Transforms into an upper triangular matrix"""
-        zero = self.field.get_zero()
+        zero = self.field.zero()
         n = min(self.height, self.width)
 
         swaps = 0
@@ -496,7 +496,7 @@ class Matrix:
                         self[k,j] += c * self[i,j]
 
                 if normalize:
-                    inv = self.field.get_inverse(self[i,i])
+                    inv = self.field.inverse(self[i,i])
                     self[i,i] = 1
                     for k in range(i + 1, self.width):
                         self[i,k] *= inv
@@ -507,7 +507,7 @@ class Matrix:
         """Transforms into a diagonal matrix"""
         self.to_upper_triangular_matrix(normalize=normalize)
 
-        zero = self.field.get_zero()
+        zero = self.field.zero()
         n = min(self.height, self.width)
 
         for i in range(n-1,-1,-1):
@@ -540,13 +540,13 @@ class Matrix:
                 tmp[k,n-1] -= tmp[k,i] * tmp[i, n-1]
         return tmp[-1, n-1]
 
-    def get_rank(self):
+    def rank(self):
         """Calculates the rank of this matrix"""
         tmp = self.copy()
         tmp.to_upper_triangular_matrix()
 
         # Count non-zero rows
-        zero = tmp.field.get_zero()
+        zero = tmp.field.zero()
         count = 0
         for row in tmp.m:
             for e in row:
@@ -555,7 +555,7 @@ class Matrix:
                     break
         return count
 
-    def get_determinant(self):
+    def determinant(self):
         """Calculates the determinant of this matrix"""
         if self.width != self.height:
             msg = "The determinant of a {}x{} matrix is undefined"
@@ -571,7 +571,7 @@ class Matrix:
         else:
             return det
 
-    def get_inverse(self):
+    def inverse(self):
         """Calculates the inverse of this matrix, if possible"""
         if self.width != self.height:
             msg = "There is no inverse of a {}x{} matrix"
@@ -592,15 +592,15 @@ class Matrix:
     def char_polynom(self):
         """Calculates the characteristic polynom using 
         the Samuelson-Berkowitz algorithm.
-        Returns a list of coefficients sorted from most
+        Returns a column matrix of coefficients sorted from most
         to least significant.
         """
         if self.height != self.width:
-            msg = "There is characteristic polynom of a {}x{} matrix"
+            msg = "The characteristic polynom of a {}x{} matrix is undefined"
             raise ArithmeticError(msg.format(self.height, self.width))
 
-        one = self.field.get_one()
-        zero = self.field.get_zero()
+        one = self.field.one()
+        zero = self.field.zero()
 
         v = Matrix([[one],[-self[0,0]]], self.field)
         A = [[]]
@@ -618,7 +618,6 @@ class Matrix:
                 q.append((R*Ar*S)[0,0])
                 Ar *= Ar
             q = list(reversed(q))
-            print(q)
 
             Toep = []
             for i in range(r+2):
@@ -634,8 +633,8 @@ class Matrix:
 
 def identity_matrix(field, n, m):
     """Creates a identity matrix with height n and width m"""
-    one = field.get_one()
-    zero = field.get_zero()
+    one = field.one()
+    zero = field.zero()
     id_matrix = [[one if j == i else zero for j in range(m)] for i in range(n)]
     return Matrix(id_matrix, field)
 

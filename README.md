@@ -14,8 +14,8 @@ when calling the str() function. Note that all disadvantages of floats apply the
 ```python
 rat_field = RationalNumbersField(output_as_fraction=True)
 
-a = rat_field.from_representant((9, 6))  # the fraction 9/6
-b = rat_field.from_representant(3)
+a = rat_field.from_repr((9, 6))  # the fraction 9/6
+b = rat_field.from_repr(3)
 print(a * b)
 ```
 
@@ -31,8 +31,8 @@ res_field_5 = ResidueField(5, transversal=neg_trans_5)
 Find the inverse of 3 in 𝔽<sub>5</sub>:
 
 ```python
-a = res_field_5.from_representant(3)
-a_i = res_field_5.get_inverse(a)
+a = res_field_5.from_repr(3)
+a_i = res_field_5.inverse(a)
 msg = "The inverse of {} in F_{} is: {}"
 print(msg.format(a, 5, a_i))
 ```
@@ -120,7 +120,7 @@ D.to_diagonal_matrix(normalize=True)
 
 Calculate the inverse of A
 ```python
-print(A * A.get_inverse())
+print(A * A.inverse())
 ```
 
 Solve the equation Eb=x for b in 𝔽<sub>2</sub>.
@@ -149,8 +149,8 @@ print("Eb=x for b = \n{}".format(R))
 Calculate the rank and determinant of A
 
 ```python
-print("rk(A) = {}".format(E.get_rank()))
-print("det(A) = {}".format(E.get_determinant()))
+print("rk(A) = {}".format(E.rank()))
+print("det(A) = {}".format(E.determinant()))
 ```
 
 ## Misc

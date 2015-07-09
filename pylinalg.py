@@ -347,7 +347,6 @@ class Matrix:
         return NotImplemented
 
     def __fast_pow(self, exp):
-        print("Baum")
         if exp == 1:
             return self,0
         else:
